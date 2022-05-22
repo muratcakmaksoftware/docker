@@ -1,0 +1,49 @@
+version: "3.9" #(Zorunlu)docker engine sürümüne göre version belirlenemsi : https://docs.docker.com/compose/compose-file/compose-file-v3/
+
+services: #containers tanımlanması
+
+    php: #service adının belirlenmesi
+
+        restart: always #docker başlatıldığında veya bir şekilde durursa container yeniden başlatır.
+        #restart: no #Default parametresidir. Hiçbir zaman otomatik başlatmaz.
+        #restart: on-failure #hata olursa tekrar başlatır.
+        #restart: unless-stopped #Always ile aynı çalışır. Farkı elle durdurulmuş ise docker yeniden başlatma sonrası başlatılmayacaktır.
+        
+        container_name: app-php # container isminin belirlenmesi
+        
+        #image: nginx:1.20.2 #Var olan imajı direk kullanmak için
+        build: #Kendi özelleştirilmiş bir imajını yaratmak için
+            context: ./php # Dockerfile içerdiği dizin yolunun belirtilmesi.
+            dockerfile: Dockerfile #Dockerfile dosyası isminin belirtilmesi
+            
+        # ports: # Local(host) ve container arasında köprü kurarak port açılır.
+            #Tek port yazılırsa container_port atanır ve local_port rasgele atanacaktır.
+            # - "9000:80" #<local_port>:<container_port>
+            
+        working_dir: /var/www #Servisin çalışacağı klasörün belirlenmesi.
+            
+        expose: #Sadece container tarafında port açmak için kullanılır.
+            - 9000
+            
+        volumes: # Local (host) ile köprü kurarak container'a her iki tarafta değişikliği paylaşılır eşleme yapar. 
+            - ./www:/var/www #<local_path>:<container_path>
+            
+        env_file: #ENV dosyasını belirtme.
+            - ./example.env
+            
+        environment: #ENV belirtme
+            - APP_ENV=production
+            
+    web:
+        restart: always
+        container_name: app-nginx
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile.nginx #Özel isim ile docker file belirlemesi.
+        ports:
+            - "80:80"
+        #links: #eski bağlama tekniğidir bridge network default da kullanılmaktadır.
+            #- php
+
+##### BONUS #####
+#image: "nginx:${NGINX_VERSION:-1.20.2}" #Değişkeni yazdırma ve default belirtme.            
