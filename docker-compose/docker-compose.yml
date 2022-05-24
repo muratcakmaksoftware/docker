@@ -45,8 +45,8 @@ services: #containers tanımlanması
       - 8.8.8.8
       - 8.8.4.4
 
-    # ? stdin_open: true
-    # ? tty: true
+    #stdin_open: true # docker run -i
+    #tty: true # docker run -t
 
     #container çalıştıktan sonra terminalde yürütülür ve işlem biterse container kapanır!!!
     #command: "php --version"
@@ -56,6 +56,16 @@ services: #containers tanımlanması
     # && python manage.py runserver 0.0.0.0:8000
     # "
 
+    #Container'ın network'ünü belirleme.
+    networks:
+      default:
+        ipv4_address: 172.20.0.20
+
+    #Container'da /etc/hosts ekleme yapar.
+    extra_hosts:
+      - "host-name-1.test:172.20.0.20"
+      - "host-name-2.test:172.20.0.30"
+
   web:
     restart: always
     container_name: app-nginx
@@ -64,8 +74,34 @@ services: #containers tanımlanması
       dockerfile: Dockerfile.nginx #Özel isim ile docker file belirlemesi.
     ports:
       - "80:80"
-      #links: #eski bağlama tekniğidir bridge network default da kullanılmaktadır.
-      #- php
+    #links: #eski bağlama tekniğidir bridge network default da kullanılmaktadır.
+    # - php
+
+#Global Network tanımlamaları
+networks:
+  #Aynı ağ üzerinden containers haberleşmesi için bir network yapılandırması.
+  my-network: #Yeni network oluşturma
+      driver: bridge
+      ipam:
+        config:
+          - subnet: 172.10.0.0/24
+
+  # Mevcut ağ'a dahil olma.
+  my-external-network:
+    external:
+      name: my-network #hangi ağ'a dahil olucaksa adı
+
+  default: #Varsayılan Ağın yapılandırılması
+    driver: bridge
+    name: my_default_network
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+#Global Volume tanımlamaları
+volumes:
+  myapp_volume:
+    driver: local
 
 ##### BONUS #####
 #image: "nginx:${NGINX_VERSION:-1.20.2}" #Değişkeni yazdırma ve default belirtme.            
